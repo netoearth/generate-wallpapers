@@ -1,0 +1,14 @@
+{
+  "appId": "com.wallpaperai.app",
+  "appName": "Wallpaper AI",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}

@@ -57,7 +57,7 @@ export const WallpaperGrid: React.FC<WallpaperGridProps> = ({
   // Loading Skeleton State
   if (isLoading) {
     return (
-      <div className="w-full max-w-xl mx-auto px-4 py-3">
+      <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <RefreshCw className="w-4 h-4 text-indigo-400 animate-spin" />
@@ -66,7 +66,7 @@ export const WallpaperGrid: React.FC<WallpaperGridProps> = ({
           <span className="text-[11px] text-slate-400 truncate max-w-[200px]">"{currentPrompt}"</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {[1, 2, 3, 4].map((num) => (
             <div
               key={num}
@@ -88,7 +88,7 @@ export const WallpaperGrid: React.FC<WallpaperGridProps> = ({
   // Empty Welcome State
   if (!wallpapers || wallpapers.length === 0) {
     return (
-      <div className="w-full max-w-xl mx-auto px-4 py-8 flex flex-col items-center text-center">
+      <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 py-8 flex flex-col items-center text-center">
         <div className="w-16 h-28 rounded-2xl bg-slate-900/90 border-2 border-dashed border-slate-700/80 flex flex-col items-center justify-center p-2 mb-4 shadow-xl">
           <ImageIcon className="w-7 h-7 text-indigo-400 mb-1" />
           <span className="text-[9px] font-bold text-slate-400 uppercase">9:16 Vibe</span>
@@ -127,7 +127,7 @@ export const WallpaperGrid: React.FC<WallpaperGridProps> = ({
 
   // Active Variations Grid
   return (
-    <div className="w-full max-w-xl mx-auto px-4 py-2">
+    <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 py-2">
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-white uppercase tracking-wider font-['Outfit',sans-serif]">
@@ -140,7 +140,7 @@ export const WallpaperGrid: React.FC<WallpaperGridProps> = ({
         <span className="text-[11px] text-slate-400">{t.tapToInspect}</span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 pb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pb-8">
         {wallpapers.map((wallpaper, index) => (
           <div
             key={wallpaper.id}

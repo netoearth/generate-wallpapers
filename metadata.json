@@ -1,6 +1,6 @@
 {
   "name": "Phone Wallpaper Generator",
-  "description": "Generate custom 9:16 phone wallpapers based on your vibe, explore variations, and remix reference styles.",
+  "description": "Cross-platform AI wallpaper generator supporting Android, Windows, Linux, and macOS with 9:16 lock screen preview, instant PWA install, and remixing.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

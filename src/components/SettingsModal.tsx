@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Check, Sliders, Sparkles, Zap, Globe } from 'lucide-react';
+import { X, Check, Sliders, Sparkles, Zap, Globe, Layers, ArrowRight } from 'lucide-react';
 import { AspectRatio, ImageSize, ModelChoice, Language } from '../types';
 import { translations } from '../i18n';
 
@@ -14,6 +14,7 @@ interface SettingsModalProps {
   onChangeImageSize: (size: ImageSize) => void;
   model: ModelChoice;
   onChangeModel: (model: ModelChoice) => void;
+  onOpenCrossPlatform?: () => void;
 }
 
 const ASPECT_RATIOS: Array<{
@@ -53,6 +54,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onChangeImageSize,
   model,
   onChangeModel,
+  onOpenCrossPlatform,
 }) => {
   if (!isOpen) return null;
 
@@ -282,6 +284,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             })}
           </div>
         </div>
+
+        {/* Cross-Platform Hub Trigger */}
+        {onOpenCrossPlatform && (
+          <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-950 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
+                <Layers className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-slate-100">{t.crossPlatformHub}</div>
+                <div className="text-[10px] text-slate-400">Android · Windows · macOS · Linux</div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenCrossPlatform();
+              }}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 text-xs font-medium transition-colors"
+            >
+              <span>{lang === 'zh' ? '管理跨平台发布' : 'Open Hub'}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Save button */}
         <div className="pt-2">

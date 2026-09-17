@@ -66,6 +66,25 @@ export const translations = {
     loadBatch: '恢复此组壁纸',
     remixBatchTag: '再创作',
 
+    // Cross-Platform Hub
+    crossPlatformHub: '跨平台发布与安装',
+    crossPlatformSubtitle: '原生支持 Android、Windows、macOS 与 Linux 四大平台',
+    installApp: '安装应用',
+    currentSystem: '检测到当前系统：',
+    oneClickInstall: '一键安装到本机',
+    installedAppNotice: '当前已作为原生/PWA应用运行',
+    androidCardTitle: 'Android (安卓系统)',
+    androidCardDesc: '支持即时安装为独立 WebAPK 应用，或打包为原生 APK/AAB 提交至各大安卓应用市场与 Google Play。',
+    windowsCardTitle: 'Windows (10 / 11)',
+    windowsCardDesc: '支持 Edge/Chrome 一键固定到任务栏与开始菜单，或通过 Electron 打包为 .exe 安装包与微软商店 (Microsoft Store) 发布。',
+    macosCardTitle: 'macOS (苹果系统)',
+    macosCardDesc: '支持 Safari 17+ 一键“添加到程序坞”，或通过 Electron 打包生成原生 .dmg 安装镜像与 .app 应用程序。',
+    linuxCardTitle: 'Linux (桌面系统)',
+    linuxCardDesc: '支持 Chromium 独立窗口运行并集成桌面快捷方式，或通过 Electron 打包为通用 .AppImage 与 .deb 软件包。',
+    packageCommandGuide: '源码构建与原生打包命令',
+    copyCommand: '复制命令',
+    copiedCommand: '已复制到剪贴板',
+
     // Errors
     notice: '提示',
     quotaErrorHint: '当前选择的Gemini生图模型需要开通结算的API Key（免费层配额为0）。系统已为您自动切换到免费的FLUX免密AI引擎！',
@@ -150,6 +169,25 @@ export const translations = {
     clearHistory: 'Clear History',
     loadBatch: 'Load Batch',
     remixBatchTag: 'Remix',
+
+    // Cross-Platform Hub
+    crossPlatformHub: 'Cross-Platform Hub',
+    crossPlatformSubtitle: 'Native-grade experience across Android, Windows, macOS & Linux',
+    installApp: 'Install App',
+    currentSystem: 'Detected Operating System:',
+    oneClickInstall: '1-Click Install to This Device',
+    installedAppNotice: 'Currently running as an installed standalone app',
+    androidCardTitle: 'Android (Mobile)',
+    androidCardDesc: 'Install instantly as a standalone WebAPK, or compile native APK/AAB via Capacitor / Bubblewrap for Google Play.',
+    windowsCardTitle: 'Windows (10 / 11)',
+    windowsCardDesc: 'Pin as desktop app via Edge/Chrome, build native .exe installer with Electron, or publish to Microsoft Store.',
+    macosCardTitle: 'macOS (Apple)',
+    macosCardDesc: 'Add directly to Dock in Safari 17+, run standalone in Chrome, or package native .dmg/.app via Electron.',
+    linuxCardTitle: 'Linux (Desktop)',
+    linuxCardDesc: 'Run as dedicated desktop window with .desktop launcher, or package universal .AppImage & .deb binaries.',
+    packageCommandGuide: 'Packaging & Native Release Commands',
+    copyCommand: 'Copy Command',
+    copiedCommand: 'Copied to clipboard',
 
     // Errors
     notice: 'Notice',

@@ -5,6 +5,8 @@ import { WallpaperGrid } from './components/WallpaperGrid';
 import { FullScreenModal } from './components/FullScreenModal';
 import { SettingsModal } from './components/SettingsModal';
 import { BatchHistoryModal } from './components/BatchHistoryModal';
+import { CrossPlatformModal } from './components/CrossPlatformModal';
+import { OfflineIndicator } from './components/OfflineIndicator';
 import { AspectRatio, ImageSize, ModelChoice, Wallpaper, WallpaperBatch, Language } from './types';
 import { translations } from './i18n';
 import { AlertCircle, X, Sparkles, RefreshCw } from 'lucide-react';
@@ -47,6 +49,7 @@ export default function App() {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
+  const [isCrossPlatformOpen, setIsCrossPlatformOpen] = useState<boolean>(false);
 
   // Check backend health/config on mount
   useEffect(() => {
@@ -169,7 +172,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#0b0d13] text-[#e2e8f0] flex flex-col font-sans">
-      {/* Mobile-first sticky header with Language Toggle */}
+      {/* Offline Connectivity Status Banner */}
+      <OfflineIndicator lang={lang} />
+
+      {/* Cross-platform adaptive sticky header with Language & Platform Hub */}
       <Header
         lang={lang}
         onToggleLang={handleToggleLang}
@@ -179,10 +185,11 @@ export default function App() {
         historyCount={batches.length}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenHistory={() => setIsHistoryOpen(true)}
+        onOpenCrossPlatform={() => setIsCrossPlatformOpen(true)}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 w-full max-w-xl mx-auto flex flex-col">
+      {/* Main Container - Responsive for mobile phones and desktop displays */}
+      <main className="flex-1 w-full max-w-4xl mx-auto flex flex-col">
         {/* Error notification banner */}
         {errorMessage && (
           <div className="mx-4 mt-3 p-3.5 rounded-2xl bg-red-950/70 border border-red-800/80 text-red-200 text-xs flex items-start justify-between gap-3 shadow-lg">
@@ -274,6 +281,7 @@ export default function App() {
         onChangeImageSize={setImageSize}
         model={model}
         onChangeModel={setModel}
+        onOpenCrossPlatform={() => setIsCrossPlatformOpen(true)}
       />
 
       {/* History Modal */}
@@ -290,6 +298,13 @@ export default function App() {
         }}
         onSelectWallpaper={(wp) => setActiveWallpaper(wp)}
         onClearHistory={() => setBatches([])}
+      />
+
+      {/* Cross-Platform Publishing & Native Client Hub Modal */}
+      <CrossPlatformModal
+        isOpen={isCrossPlatformOpen}
+        onClose={() => setIsCrossPlatformOpen(false)}
+        lang={lang}
       />
     </div>
   );

@@ -43,7 +43,7 @@ export const VibeInput: React.FC<VibeInputProps> = ({
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto px-4 pt-4 pb-2">
+    <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 pt-4 pb-2">
       <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
         {/* Remixing reference indicator */}
         {referenceImage && (
