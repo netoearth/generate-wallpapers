@@ -272,6 +272,189 @@ async function generateSingleWallpaper({
   throw lastError || new Error(`Failed to generate wallpaper variation ${index + 1}`);
 }
 
+// Dimensions mapping for custom APIs (DashScope, SiliconFlow, OpenAI, CogView)
+function getDimensionsForCustomApi(aspectRatio: string = '9:16', provider: string = ''): string {
+  const map: Record<string, string> = {
+    '9:16': '768x1344',
+    '1:1': '1024x1024',
+    '3:4': '768x1024',
+    '4:3': '1024x768',
+    '16:9': '1344x768',
+    '21:9': '1536x640',
+    '2:3': '832x1248',
+    '3:2': '1248x832',
+  };
+
+  const size = map[aspectRatio] || '768x1344';
+  if (provider === 'qwen-dashscope') {
+    // DashScope Wanx supports both '768*1344' and '768x1344'
+    return size.replace('x', '*');
+  }
+  return size;
+}
+
+// DeepSeek Prompt Enhancement
+async function enhancePromptsWithDeepSeek(params: {
+  prompt: string;
+  apiKey: string;
+  endpoint?: string;
+  model?: string;
+}): Promise<string[]> {
+  try {
+    const endpoint = params.endpoint || 'https://api.deepseek.com/v1/chat/completions';
+    const model = params.model || 'deepseek-chat';
+
+    const systemPrompt = `你是一位顶尖的手机壁纸视觉艺术总监与摄影大师。
+用户输入了一个壁纸氛围或主题，请将其扩写为4组用于文生图的高清手机垂直壁纸（9:16比例）提示词。
+要求：
+1. 4组提示词具有截然不同的视角、光影质感与色彩体系。
+2. 强化手机壁纸的留白美学、纯净度与视觉焦点。
+3. 请仅以JSON数组格式输出4个字符串，格式为：["提示词1", "提示词2", "提示词3", "提示词4"]。不要包含任何markdown标记或额外解释。`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${params.apiKey.trim()}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `壁纸主题氛围：${params.prompt}` },
+        ],
+        temperature: 0.85,
+        max_tokens: 800,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.warn('DeepSeek prompt enhance call failed:', res.status, errText);
+      return [];
+    }
+
+    const data: any = await res.json();
+    const reply = data.choices?.[0]?.message?.content || '';
+    const jsonMatch = reply.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (Array.isArray(parsed) && parsed.length >= 4) {
+        return parsed.slice(0, 4).map((s: any) => String(s).trim());
+      }
+    }
+  } catch (e) {
+    console.warn('DeepSeek prompt enhancer skipped due to error:', e);
+  }
+  return [];
+}
+
+// Generate single wallpaper via Custom API
+async function generateCustomApiSingleWallpaper(params: {
+  customApi: {
+    provider: string;
+    endpoint: string;
+    apiKey: string;
+    model: string;
+  };
+  prompt: string;
+  variationPrompt: string;
+  aspectRatio: string;
+  imageSize: string;
+  index: number;
+  referenceImage?: string | null;
+}) {
+  const { customApi, prompt, variationPrompt, aspectRatio, imageSize, index, referenceImage } = params;
+
+  if (!customApi.apiKey || customApi.apiKey.trim() === '') {
+    throw new Error('未配置自定义 API Key，请在“设置 -> 自定义 API”中填入您的密钥。');
+  }
+
+  const endpoint = customApi.endpoint.trim();
+  const apiKey = customApi.apiKey.trim();
+  const model = customApi.model.trim() || 'wanx2.1-t2i-turbo';
+
+  const fullPrompt = `${prompt}, ${variationPrompt}, phone wallpaper, ultra detailed, crisp focus, 8k resolution`;
+  const size = getDimensionsForCustomApi(aspectRatio, customApi.provider);
+
+  const payload: Record<string, any> = {
+    model,
+    prompt: fullPrompt,
+    n: 1,
+  };
+
+  payload.size = size;
+  payload.image_size = size;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      let errDetail = `HTTP ${res.status}`;
+      try {
+        const errJson: any = await res.json();
+        errDetail = errJson.error?.message || errJson.message || JSON.stringify(errJson);
+      } catch {
+        errDetail = await res.text();
+      }
+      throw new Error(`自定义 API 响应错误 (${res.status}): ${errDetail}`);
+    }
+
+    const data: any = await res.json();
+    let imageUrl = '';
+
+    if (Array.isArray(data.data) && data.data.length > 0) {
+      if (data.data[0].url) {
+        imageUrl = data.data[0].url;
+      } else if (data.data[0].b64_json) {
+        imageUrl = `data:image/png;base64,${data.data[0].b64_json}`;
+      }
+    } else if (data.output?.render_urls?.[0]) {
+      imageUrl = data.output.render_urls[0];
+    } else if (data.images?.[0]?.url) {
+      imageUrl = data.images[0].url;
+    }
+
+    if (!imageUrl) {
+      throw new Error(`未能从 API 返回数据中解析出图片: ${JSON.stringify(data).slice(0, 200)}`);
+    }
+
+    return {
+      id: `wp_custom_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 7)}`,
+      url: imageUrl,
+      prompt,
+      variationIndex: index,
+      aspectRatio,
+      imageSize: imageSize || '1K',
+      model: `${customApi.provider}:${model}`,
+      createdAt: Date.now(),
+      isRemix: Boolean(referenceImage),
+    };
+  } catch (err: any) {
+    clearTimeout(timeout);
+    throw err;
+  }
+}
+
 // Generate 4 Wallpaper Variations
 app.post('/api/generate-wallpapers', async (req, res) => {
   try {
@@ -282,12 +465,76 @@ app.post('/api/generate-wallpapers', async (req, res) => {
       model = 'flux-dev-free',
       referenceImage = null,
       count = 4,
+      customApi,
     } = req.body;
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
       return res.status(400).json({
         success: false,
         error: 'Please provide a vibe or prompt description for your wallpaper.',
+      });
+    }
+
+    const generateCount = Math.min(Math.max(Number(count) || 4, 1), 4);
+
+    // If Custom API is enabled or selected as the model
+    if (customApi && customApi.enabled && customApi.apiKey) {
+      const variationStyles = [
+        'Atmospheric mood lighting, dramatic focal point, rich tonal depth, pristine wallpaper framing',
+        'Cinematic wide perspective, layered environment, subtle specular glow, fine details',
+        'Artistic color harmony, soft ambient gradients, aesthetic minimalism, balanced negative space',
+        'Dynamic high contrast, evocative textures, surreal depth of field, elegant phone display design',
+      ];
+
+      let promptsToUse = variationStyles;
+      if (customApi.enablePromptEnhance) {
+        const deepSeekKey = customApi.enhancerApiKey || customApi.apiKey;
+        const enhanced = await enhancePromptsWithDeepSeek({
+          prompt: prompt.trim(),
+          apiKey: deepSeekKey,
+          endpoint: customApi.enhancerEndpoint,
+          model: customApi.enhancerModel,
+        });
+        if (enhanced.length === 4) {
+          promptsToUse = enhanced;
+        }
+      }
+
+      const customTasks = [];
+      for (let i = 0; i < generateCount; i++) {
+        if (i > 0) await new Promise((r) => setTimeout(r, 300));
+        const varStyle = promptsToUse[i % promptsToUse.length];
+        customTasks.push(
+          generateCustomApiSingleWallpaper({
+            customApi,
+            prompt: prompt.trim(),
+            variationPrompt: varStyle,
+            aspectRatio,
+            imageSize,
+            index: i,
+            referenceImage,
+          })
+        );
+      }
+
+      const results = await Promise.allSettled(customTasks);
+      const successfulWallpapers = results
+        .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
+        .map((r) => r.value);
+
+      if (successfulWallpapers.length > 0) {
+        return res.json({
+          success: true,
+          wallpapers: successfulWallpapers,
+          engineUsed: `${customApi.provider}:${customApi.model}`,
+        });
+      }
+
+      const firstFailure = results.find((r) => r.status === 'rejected') as PromiseRejectedResult | undefined;
+      const errMsg = firstFailure?.reason?.message || '自定义 API 生图未返回有效图片';
+      return res.status(400).json({
+        success: false,
+        error: errMsg,
       });
     }
 
@@ -301,8 +548,6 @@ app.post('/api/generate-wallpapers', async (req, res) => {
       'Artistic color harmony, soft ambient gradients, aesthetic minimalism, balanced negative space',
       'Dynamic high contrast, evocative textures, surreal depth of field, elegant phone display design',
     ];
-
-    const generateCount = Math.min(Math.max(Number(count) || 4, 1), 4);
 
     // If Free FLUX Dev model selected or no Gemini key available, use FLUX engine directly
     if (!isGeminiModel || !apiKey || apiKey.trim() === '') {
@@ -408,6 +653,76 @@ app.post('/api/generate-wallpapers', async (req, res) => {
     return res.status(500).json({
       success: false,
       error: error?.message || 'An unexpected error occurred during wallpaper generation.',
+    });
+  }
+});
+
+// Test Custom API Connection
+app.post('/api/test-custom-api', async (req, res) => {
+  try {
+    const { endpoint, apiKey, model, provider } = req.body;
+
+    if (!endpoint || !endpoint.trim()) {
+      return res.status(400).json({ success: false, error: '请输入 API 端点 URL' });
+    }
+    if (!apiKey || !apiKey.trim()) {
+      return res.status(400).json({ success: false, error: '请输入 API Key' });
+    }
+
+    const trimmedEndpoint = endpoint.trim();
+    const trimmedKey = apiKey.trim();
+    const targetModel = (model || 'wanx2.1-t2i-turbo').trim();
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+
+    const size = getDimensionsForCustomApi('1:1', provider);
+    const testPayload = {
+      model: targetModel,
+      prompt: 'minimalist peaceful gradient phone wallpaper, soft light, clean aesthetic',
+      n: 1,
+      size,
+      image_size: size,
+    };
+
+    const response = await fetch(trimmedEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${trimmedKey}`,
+      },
+      body: JSON.stringify(testPayload),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      let errDetail = `HTTP ${response.status}`;
+      try {
+        const errJson: any = await response.json();
+        errDetail = errJson.error?.message || errJson.message || JSON.stringify(errJson);
+      } catch {
+        errDetail = await response.text();
+      }
+      return res.json({
+        success: false,
+        error: `连接或鉴权失败 (${response.status}): ${errDetail}`,
+      });
+    }
+
+    const data: any = await response.json();
+    return res.json({
+      success: true,
+      message: 'API 连接与生图测试成功！',
+      provider,
+      model: targetModel,
+      data,
+    });
+  } catch (err: any) {
+    return res.json({
+      success: false,
+      error: `请求超时或网络异常: ${err?.message || err}`,
     });
   }
 });

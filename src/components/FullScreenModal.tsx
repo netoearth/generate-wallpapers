@@ -9,6 +9,7 @@ import {
   EyeOff,
   Layers,
   Sparkles,
+  Heart,
 } from 'lucide-react';
 import { Wallpaper, Language } from '../types';
 import { translations } from '../i18n';
@@ -20,6 +21,8 @@ interface FullScreenModalProps {
   onClose: () => void;
   onRemix: (wallpaper: Wallpaper) => void;
   onSelectWallpaper: (wallpaper: Wallpaper) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (wallpaper: Wallpaper) => void;
 }
 
 export const FullScreenModal: React.FC<FullScreenModalProps> = ({
@@ -29,6 +32,8 @@ export const FullScreenModal: React.FC<FullScreenModalProps> = ({
   onClose,
   onRemix,
   onSelectWallpaper,
+  isFavorite = false,
+  onToggleFavorite,
 }) => {
   const [showLockOverlay, setShowLockOverlay] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<string>('09:41');
@@ -117,6 +122,23 @@ export const FullScreenModal: React.FC<FullScreenModalProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Favorite toggle button */}
+          <button
+            type="button"
+            id="toggle-favorite-top-btn"
+            onClick={() => onToggleFavorite?.(wallpaper)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
+              isFavorite
+                ? 'bg-rose-600 text-white border-rose-400 shadow-sm shadow-rose-950/40'
+                : 'bg-slate-900/80 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-rose-300'
+            }`}
+            title={isFavorite ? t.unfavorite : t.favorite}
+            aria-label={isFavorite ? t.unfavorite : t.favorite}
+          >
+            <Heart className={`w-3.5 h-3.5 ${isFavorite ? 'fill-white text-white' : ''}`} />
+            <span className="text-xs">{isFavorite ? t.favorited : t.notFavorited}</span>
+          </button>
+
           {/* Lock screen preview toggle */}
           <button
             type="button"
@@ -239,16 +261,31 @@ export const FullScreenModal: React.FC<FullScreenModalProps> = ({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-3 gap-2">
+            {/* Favorite Button */}
+            <button
+              type="button"
+              id="fullscreen-favorite-btn"
+              onClick={() => onToggleFavorite?.(wallpaper)}
+              className={`flex items-center justify-center gap-1.5 py-3 px-2 sm:px-3 rounded-xl border active:scale-[0.98] transition-all shadow-md text-xs sm:text-sm font-semibold ${
+                isFavorite
+                  ? 'bg-rose-950/80 border-rose-500/70 text-rose-200'
+                  : 'bg-slate-800 hover:bg-slate-750 text-white border-slate-700 hover:border-slate-600'
+              }`}
+            >
+              <Heart className={`w-4 h-4 shrink-0 ${isFavorite ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`} />
+              <span className="truncate">{isFavorite ? t.favorited : t.notFavorited}</span>
+            </button>
+
             {/* Download Button */}
             <button
               type="button"
               id="download-wallpaper-btn"
               onClick={handleDownload}
-              className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-750 text-white text-xs md:text-sm font-semibold border border-slate-700 active:scale-[0.98] transition-all shadow-md"
+              className="flex items-center justify-center gap-1.5 py-3 px-2 sm:px-3 rounded-xl bg-slate-800 hover:bg-slate-750 text-white text-xs sm:text-sm font-semibold border border-slate-700 active:scale-[0.98] transition-all shadow-md"
             >
-              <Download className="w-4 h-4 text-indigo-400" />
-              <span>{t.downloadWallpaper}</span>
+              <Download className="w-4 h-4 shrink-0 text-indigo-400" />
+              <span className="truncate">{t.download}</span>
             </button>
 
             {/* Remix Button */}
@@ -256,10 +293,10 @@ export const FullScreenModal: React.FC<FullScreenModalProps> = ({
               type="button"
               id="remix-wallpaper-btn"
               onClick={() => onRemix(wallpaper)}
-              className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs md:text-sm font-semibold active:scale-[0.98] transition-all shadow-md shadow-indigo-900/40"
+              className="flex items-center justify-center gap-1.5 py-3 px-2 sm:px-3 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs sm:text-sm font-semibold active:scale-[0.98] transition-all shadow-md shadow-indigo-900/40"
             >
-              <RefreshCw className="w-4 h-4 text-indigo-200" />
-              <span>{t.remixBatch}</span>
+              <RefreshCw className="w-4 h-4 shrink-0 text-indigo-200" />
+              <span className="truncate">{t.remix}</span>
             </button>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Maximize2, Download, RefreshCw, Sparkles, Layers, Image as ImageIcon } from 'lucide-react';
+import { Maximize2, Download, RefreshCw, Sparkles, Layers, Image as ImageIcon, Heart } from 'lucide-react';
 import { Wallpaper, AspectRatio, Language } from '../types';
 import { translations } from '../i18n';
 
@@ -9,9 +9,11 @@ interface WallpaperGridProps {
   isLoading: boolean;
   currentPrompt: string;
   aspectRatio: AspectRatio;
+  favorites?: Wallpaper[];
   onSelectWallpaper: (wallpaper: Wallpaper) => void;
   onQuickDownload: (wallpaper: Wallpaper, e: React.MouseEvent) => void;
   onQuickRemix: (wallpaper: Wallpaper, e: React.MouseEvent) => void;
+  onQuickFavorite?: (wallpaper: Wallpaper, e: React.MouseEvent) => void;
   onSelectPresetVibe: (vibe: string) => void;
 }
 
@@ -21,9 +23,11 @@ export const WallpaperGrid: React.FC<WallpaperGridProps> = ({
   isLoading,
   currentPrompt,
   aspectRatio,
+  favorites = [],
   onSelectWallpaper,
   onQuickDownload,
   onQuickRemix,
+  onQuickFavorite,
   onSelectPresetVibe,
 }) => {
   const t = translations[lang];
@@ -187,6 +191,33 @@ export const WallpaperGrid: React.FC<WallpaperGridProps> = ({
                 >
                   <Download className="w-3.5 h-3.5" />
                 </button>
+
+                {onQuickFavorite && (
+                  (() => {
+                    const isFav = favorites.some(
+                      (f) => f.id === wallpaper.id || (f.url === wallpaper.url && f.prompt === wallpaper.prompt)
+                    );
+                    return (
+                      <button
+                        type="button"
+                        id={`quick-favorite-${index}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onQuickFavorite(wallpaper, e);
+                        }}
+                        className={`p-1.5 rounded-lg backdrop-blur-md transition-colors border ${
+                          isFav
+                            ? 'bg-rose-950/80 text-rose-300 border-rose-500/50 hover:bg-rose-900'
+                            : 'bg-black/70 text-slate-300 hover:text-rose-400 hover:bg-slate-800 border-white/10'
+                        }`}
+                        title={isFav ? t.unfavorite : t.favorite}
+                        aria-label={isFav ? t.unfavorite : t.favorite}
+                      >
+                        <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-rose-500 text-rose-500' : ''}`} />
+                      </button>
+                    );
+                  })()
+                )}
 
                 <button
                   type="button"

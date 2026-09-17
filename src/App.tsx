@@ -44,12 +44,56 @@ export default function App() {
   const [batches, setBatches] = useState<WallpaperBatch[]>([]);
   const [activeWallpaper, setActiveWallpaper] = useState<Wallpaper | null>(null);
 
+  // Favorites state array persisted in localStorage
+  const [favorites, setFavorites] = useState<Wallpaper[]>(() => {
+    try {
+      const saved = localStorage.getItem('wallpaper_ai_favorites');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error('Failed to load favorites from localStorage:', e);
+    }
+    return [];
+  });
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
+  const [historyModalTab, setHistoryModalTab] = useState<'history' | 'favorites'>('history');
   const [isCrossPlatformOpen, setIsCrossPlatformOpen] = useState<boolean>(false);
+
+  // Sync favorites to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('wallpaper_ai_favorites', JSON.stringify(favorites));
+    } catch (e) {
+      console.error('Failed to save favorites to localStorage:', e);
+    }
+  }, [favorites]);
+
+  // Toggle favorite wallpaper helper
+  const handleToggleFavorite = (wallpaper: Wallpaper) => {
+    setFavorites((prev) => {
+      const exists = prev.some(
+        (w) => w.id === wallpaper.id || (w.url === wallpaper.url && w.prompt === wallpaper.prompt)
+      );
+      if (exists) {
+        return prev.filter(
+          (w) => w.id !== wallpaper.id && !(w.url === wallpaper.url && w.prompt === wallpaper.prompt)
+        );
+      } else {
+        return [wallpaper, ...prev];
+      }
+    });
+  };
+
+  const handleClearFavorites = () => {
+    setFavorites([]);
+  };
 
   // Check backend health/config on mount
   useEffect(() => {
@@ -183,8 +227,16 @@ export default function App() {
         imageSize={imageSize}
         model={model}
         historyCount={batches.length}
+        favoritesCount={favorites.length}
         onOpenSettings={() => setIsSettingsOpen(true)}
-        onOpenHistory={() => setIsHistoryOpen(true)}
+        onOpenHistory={() => {
+          setHistoryModalTab('history');
+          setIsHistoryOpen(true);
+        }}
+        onOpenFavorites={() => {
+          setHistoryModalTab('favorites');
+          setIsHistoryOpen(true);
+        }}
         onOpenCrossPlatform={() => setIsCrossPlatformOpen(true)}
       />
 
@@ -248,9 +300,11 @@ export default function App() {
             isLoading={isLoading}
             currentPrompt={prompt}
             aspectRatio={aspectRatio}
+            favorites={favorites}
             onSelectWallpaper={(wp) => setActiveWallpaper(wp)}
             onQuickDownload={handleQuickDownload}
             onQuickRemix={handleRemix}
+            onQuickFavorite={handleToggleFavorite}
             onSelectPresetVibe={(vibe) => {
               setPrompt(vibe);
               handleGenerate(referenceImage, vibe);
@@ -259,14 +313,27 @@ export default function App() {
         </div>
       </main>
 
-      {/* Full-Screen Wallpaper Modal with Download & Remix */}
+      {/* Full-Screen Wallpaper Modal with Download, Remix & Favorite */}
       <FullScreenModal
         lang={lang}
         wallpaper={activeWallpaper}
-        allWallpapers={currentWallpapers}
+        allWallpapers={
+          activeWallpaper && currentWallpapers.some((w) => w.id === activeWallpaper.id)
+            ? currentWallpapers
+            : activeWallpaper && favorites.some((w) => w.id === activeWallpaper.id)
+            ? favorites
+            : currentWallpapers
+        }
         onClose={() => setActiveWallpaper(null)}
         onRemix={handleRemix}
         onSelectWallpaper={setActiveWallpaper}
+        isFavorite={Boolean(
+          activeWallpaper &&
+            favorites.some(
+              (w) => w.id === activeWallpaper.id || (w.url === activeWallpaper.url && w.prompt === activeWallpaper.prompt)
+            )
+        )}
+        onToggleFavorite={handleToggleFavorite}
       />
 
       {/* Settings Modal (Aspect Ratio, Image Size, Model, Language) */}
@@ -284,12 +351,14 @@ export default function App() {
         onOpenCrossPlatform={() => setIsCrossPlatformOpen(true)}
       />
 
-      {/* History Modal */}
+      {/* History & Favorites Modal */}
       <BatchHistoryModal
         lang={lang}
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
         batches={batches}
+        favorites={favorites}
+        initialTab={historyModalTab}
         onSelectBatch={(batch) => {
           setCurrentWallpapers(batch.wallpapers);
           setPrompt(batch.prompt);
@@ -298,6 +367,8 @@ export default function App() {
         }}
         onSelectWallpaper={(wp) => setActiveWallpaper(wp)}
         onClearHistory={() => setBatches([])}
+        onToggleFavorite={handleToggleFavorite}
+        onClearFavorites={handleClearFavorites}
       />
 
       {/* Cross-Platform Publishing & Native Client Hub Modal */}

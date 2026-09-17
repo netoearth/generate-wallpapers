@@ -1,5 +1,5 @@
 import React from 'react';
-import { Smartphone, Sliders, History, Globe, Layers } from 'lucide-react';
+import { Smartphone, Sliders, History, Globe, Layers, Heart } from 'lucide-react';
 import { AspectRatio, ImageSize, ModelChoice, Language } from '../types';
 import { translations } from '../i18n';
 import { PWAInstallButton } from './PWAInstallButton';
@@ -11,8 +11,10 @@ interface HeaderProps {
   imageSize: ImageSize;
   model: ModelChoice;
   historyCount: number;
+  favoritesCount?: number;
   onOpenSettings: () => void;
   onOpenHistory: () => void;
+  onOpenFavorites?: () => void;
   onOpenCrossPlatform: () => void;
 }
 
@@ -23,8 +25,10 @@ export const Header: React.FC<HeaderProps> = ({
   imageSize,
   model,
   historyCount,
+  favoritesCount = 0,
   onOpenSettings,
   onOpenHistory,
+  onOpenFavorites,
   onOpenCrossPlatform,
 }) => {
   const t = translations[lang];
@@ -77,6 +81,23 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Globe className="w-3.5 h-3.5 text-indigo-400" />
             <span className="font-mono text-[11px]">{lang === 'zh' ? 'EN' : '中文'}</span>
+          </button>
+
+          {/* Favorites Button */}
+          <button
+            id="open-favorites-btn"
+            type="button"
+            onClick={onOpenFavorites || onOpenHistory}
+            className="relative p-2 rounded-lg text-slate-300 hover:text-rose-400 bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 transition-colors"
+            title={t.favoritesTab}
+            aria-label={t.favoritesTab}
+          >
+            <Heart className={`w-4 h-4 ${favoritesCount > 0 ? 'text-rose-400 fill-rose-500' : ''}`} />
+            {favoritesCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 text-[10px] font-bold text-white rounded-full flex items-center justify-center">
+                {favoritesCount}
+              </span>
+            )}
           </button>
 
           {/* History Button */}

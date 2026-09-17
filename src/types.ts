@@ -5,7 +5,27 @@ export type ImageSize = '1K' | '2K' | '4K';
 export type ModelChoice =
   | 'flux-dev-free'
   | 'gemini-3-pro-image-preview'
-  | 'gemini-3.1-flash-image-preview';
+  | 'gemini-3.1-flash-image-preview'
+  | 'custom-api';
+
+export type CustomApiProvider =
+  | 'qwen-dashscope'
+  | 'siliconflow'
+  | 'deepseek-compat'
+  | 'zhipu-cogview'
+  | 'custom-openai';
+
+export interface CustomApiConfig {
+  enabled: boolean;
+  provider: CustomApiProvider;
+  endpoint: string;
+  apiKey: string;
+  model: string;
+  enablePromptEnhance?: boolean;
+  enhancerModel?: string;
+  enhancerEndpoint?: string;
+  enhancerApiKey?: string;
+}
 
 export type Language = 'zh' | 'en';
 
@@ -41,6 +61,7 @@ export interface GenerationRequest {
   model?: ModelChoice;
   referenceImage?: string | null;
   count?: number;
+  customApi?: CustomApiConfig;
 }
 
 export interface GenerationResponse {
