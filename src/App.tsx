@@ -7,7 +7,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { BatchHistoryModal } from './components/BatchHistoryModal';
 import { CrossPlatformModal } from './components/CrossPlatformModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
-import { AspectRatio, ImageSize, ModelChoice, Wallpaper, WallpaperBatch, Language } from './types';
+import { AspectRatio, ImageSize, ModelChoice, Wallpaper, WallpaperBatch, Language, CustomApiConfig } from './types';
 import { translations } from './i18n';
 import { AlertCircle, X, Sparkles, RefreshCw } from 'lucide-react';
 
@@ -39,6 +39,35 @@ export default function App() {
   // Default to flux-dev-free so user immediately gets reliable, quota-free wallpaper generation!
   const [model, setModel] = useState<ModelChoice>('flux-dev-free');
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
+
+  // Custom API configuration state persisted in localStorage
+  const [customApi, setCustomApi] = useState<CustomApiConfig>(() => {
+    try {
+      const saved = localStorage.getItem('wallpaper_ai_custom_api');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to load custom API config from localStorage:', e);
+    }
+    return {
+      enabled: false,
+      provider: 'qwen-dashscope',
+      endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1/images/generations',
+      apiKey: '',
+      model: 'wanx2.1-t2i-turbo',
+      enablePromptEnhance: true,
+    };
+  });
+
+  // Sync custom API config to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('wallpaper_ai_custom_api', JSON.stringify(customApi));
+    } catch (e) {
+      console.error('Failed to save custom API config to localStorage:', e);
+    }
+  }, [customApi]);
 
   const [currentWallpapers, setCurrentWallpapers] = useState<Wallpaper[]>([]);
   const [batches, setBatches] = useState<WallpaperBatch[]>([]);
@@ -133,6 +162,7 @@ export default function App() {
           model,
           referenceImage: refToUse,
           count: 4,
+          customApi: model === 'custom-api' || customApi.enabled ? customApi : undefined,
         }),
       });
 
@@ -336,7 +366,7 @@ export default function App() {
         onToggleFavorite={handleToggleFavorite}
       />
 
-      {/* Settings Modal (Aspect Ratio, Image Size, Model, Language) */}
+      {/* Settings Modal (Aspect Ratio, Image Size, Model, Language, Custom API) */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
@@ -348,6 +378,8 @@ export default function App() {
         onChangeImageSize={setImageSize}
         model={model}
         onChangeModel={setModel}
+        customApi={customApi}
+        onChangeCustomApi={setCustomApi}
         onOpenCrossPlatform={() => setIsCrossPlatformOpen(true)}
       />
 
